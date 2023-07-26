@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <math.h>
+#include <cstring>
 #define diskSpace 1024 // in terms of mb
 #define blockSize 1    // in terms of mb
 const int numberOfBlocks = diskSpace / blockSize;
@@ -8,23 +10,29 @@ using namespace std;
 class allocationTableBlock // done
 {
 public:
-    int blockNumber = 0;
+    int used = 0; // Default value indicating unoccupied
     char *blockPointer = NULL;
-    ~allocationTableBlock(){
+    ~allocationTableBlock()
+    {
         delete[] blockPointer;
     }
 };
 
 allocationTableBlock FAT[numberOfBlocks];
-
+// Find free blocks in constant time
+class file;
 class directory
 {
 private:
     // metedata
     string name;
     string creationDate;
-    int numberOfFiles;
     int directorySize;
+    // Tabel that points to all file objects, also point towards directory objects
+    file *fileRecords = NULL; // for a single level directory
+    int numberOfFiles = 0;
+    directory *directoryRecords = NULL;
+    int numberOfDirectories = 0;
 
 public:
     // Operations allowed on directories
@@ -33,7 +41,9 @@ class file
 {
 private:
     // metedata
+    // File name------
     string name;
+    // Metadata------
     string creationDate;
     int fileSize;
     string dataType;
@@ -45,60 +55,86 @@ private:
     int closeFile;
     int renameFile;
     int deleteFile;
-    int startingBlock;
+    // Index table------
+    int *indexTable;
+    int blocksUsed;
 
-public:
+public: // Need to set default values
     // Operations allowed on files
     file(int a = 0)
     { // 0 means public user and 1 means owner
-      // set up permissions for public and owner
+        // set up permissions for public and owner
+        cout << "Made file" << endl;
     }
-    friend void createFile(string fileContent, file &actualFile);
+    ~file()
+    {
+        delete[] indexTable;
+        cout << "Destroyed file" << endl;
+    }
+    friend void createFile(char fileContent[], file &actualFile);
 };
-int findEmptyBlock() // done
+int findEmptyBlock() // need to make it constant time
 {
     for (int i = 1; i < numberOfBlocks; i++)
     {
-        if (FAT[i].blockNumber == 0)
+        if (FAT[i].used == 0)
         {
             return i;
         }
     }
 } // Returns the index of the first empty block
-void takeFileMetadata(file &actualFile){
-    //need to take file name and everything from user
-}
-void createFile(string fileContent, file &actualFile)
+void takeFileMetadata(file &actualFile)
 {
-    int fileSize = sizeof(fileContent);
-    int pointer = 0;
-    int startingBlock;
-    while (fileSize > blockSize)
+    // need to take file name and everything from user and time
+} // |1| |2| |3| |4| |5|
+void createFile(char fileContent[], file &actualFile) // Need to update directory
+{
+    cout << "Starting file creation" << endl;
+    cout << fileContent << " size of string is " << sizeof(fileContent) << endl;
+    string a = "b";
+    int fileSize = strlen(fileContent);
+    int blocksUsed = ceil(fileSize / blockSize);
+    actualFile.blocksUsed = blocksUsed;
+    actualFile.indexTable = new int[blocksUsed]; // creates array of that many elements
+    //----------------------------------------
+    int pointer = 0, i;
+    for (int k = 0; k < blocksUsed; k++)
     {
-        int blockNumber = findEmptyBlock();
-        if (pointer = 0)
-        {
-            startingBlock = blockNumber;
-        }
+        cout << "Made 1 block " << blocksUsed << " huh" << endl;
+        int blockNumber = findEmptyBlock(); // Finding empty block
+        FAT[blockNumber].used = 1;
+        actualFile.indexTable[k] = blockNumber; // Update index table with free block found
         FAT[blockNumber].blockPointer = new char[blockSize];
-        // moving the string
-        for (int i = 0; i < blockSize; i++)
+        // copying the string
+        for (i = 0; i < blockSize; i++)
         {
             FAT[blockNumber].blockPointer[i] = fileContent[i + pointer];
         }
-        fileSize -= blockSize;
+        pointer += i;
     }
-    //Metadata of the file
-    actualFile.startingBlock=startingBlock;
-    actualFile.fileSize=sizeof(fileContent);
-    takeFileMetadata(actualFile);
+    actualFile.fileSize = sizeof(fileContent); // updating metadata
+    takeFileMetadata(actualFile);              // ask user meta data
+    cout << "Finishing file creation" << endl;
 }
 
+// createDirectory funtion
+// delete file
+// delete directory
+// rename
+// moving
+// copy (oit)
+// Periodic defragmentation?
+// Need to handle space constraints
+// Taking different types of files from os or something
+// Need to implement tree structure for directory
+
 int main()
-{
+{ // Need to make user interface(Menu):
+    // Create file, directory, delete, rename, modify, moving, copy, taking file from os or something
     // If an entry has value 0, that block is unused
     // initialize the FAT with all 0s representing empty blocks
     file f1;
-    string sampleText="Hello thereee";
-    createFile(sampleText,f1);
+    char sampleText[] = "Hello thereee";
+    createFile(sampleText, f1);
+    // cout << strlen(sampleText) << endl;
 }
