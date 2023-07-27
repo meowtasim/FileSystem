@@ -121,11 +121,16 @@ void createFile(char fileContent[], file &actualFile) // Need to update director
     cout << "Finishing file creation" << endl;
 }
 
+//Function to remove file from directory array
+void removeFileFromDirectory(file &a){
+
+}
+
 // createDirectory funtion
 // delete file
-void deleteFile(file &a)//incomplete
+void deleteFile(file &a)//done
 {
-    // a.locationDirectory, need to delete from directory records and rearrange
+    removeFileFromDirectory(a);
     for(int i=0;i<a.blocksUsed;i++){
         FAT[a.indexTable[i]].used=0;//Mark block as unused
         delete FAT[a.indexTable[i]].blockPointer;//free memory space allocated for block
@@ -136,6 +141,9 @@ void deleteFile(file &a)//incomplete
 // delete directory
 // rename
 // moving
+void moveFile(file &a,directory &d){//move file to destination directory
+    
+}
 // copy (oit)
 // displaying the whole file system
 // Periodic defragmentation?
