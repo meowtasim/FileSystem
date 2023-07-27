@@ -234,10 +234,10 @@ void moveFile(file &a, directory &d)
         cout << "Error : Maximum capacity of directory reached" << endl;
         return;
     }
-    d.numberOfFiles++;
     d.fileRecords[d.numberOfFiles] = &a; // first add file to new directory
-    removeFileFromDirectory(a);          // Remove file from previous directory
-    a.locationDirectory = &d;            // Update file metadata
+    d.numberOfFiles++;
+    removeFileFromDirectory(a); // Remove file from previous directory
+    a.locationDirectory = &d;   // Update file metadata
 }
 // copy (oit)
 // displaying the whole file system--Main
@@ -372,11 +372,14 @@ int main()
             break;
         case 10: // how dare someone exit, also how to even exit switch
             exit(1);
-        case 11: // Open directory - doable - Mutasim
+        case 11:
+        { // Open directory - doable - Mutasim
             cout << "Enter the name of directory you want to open";
             cin >> fileName2;
-
+            directory *d = findDirectory(currentDirectory, fileName2);
+            currentDirectory = d;
             break;
+        }
         case 12: // Need to be able to change access rights and give access according to it - Saana
 
             break;
