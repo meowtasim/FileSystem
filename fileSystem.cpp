@@ -183,36 +183,46 @@ void moveFile(file &a, directory &d)
 // Periodic defragmentation?
 // Need to handle space constraints
 // Taking different types of files from os or something
-int main()
-{ // Need to make user interface(Menu):
-    // --Create file, directory, delete, rename,-- modify, moving, copy, taking file from os or something
-    directory rootDirectory;
 
-    file f1;
-    char sampleText[] = "Hello thereee";
-    string currentPath = "rootDirectory", displayFilesystem = "ls", makeNewFile = "new file", makeNewDirectory = "new directory", deleteObject = "delete";
-    char commandLineInput[20];
-    createFile(sampleText, f1);
-    // cout << strlen(sampleText) << endl;
-    while (1)
-    {
-        cout << "D:\\" << currentPath << ">"; // Display current directory like command prompt
-        cin >> commandLineInput;              // Asking some command line function from user
-        if (commandLineInput == displayFilesystem)
-        {
-            // Display all the directories and files of the currently open directory
-        }
-        else if (commandLineInput == makeNewFile)
-        {
-            // Need to call createFile
-        }
-        else if (commandLineInput == makeNewDirectory)
-        {
-            // Need to call createDirectory
-        }
-        else if (commandLineInput == deleteObject)
-        {
-            // Need to call delete function
-        }
+
+int main(){
+    int choice;
+    char fcontent[100];
+	cout<<"\n\n                   _______--------------------FILE SYSTEM--------------------_______                   "<<endl;
+    cout<<"\n1.Create File\n"<<"2.Create Directory\n"<<"3.View File System\n"<<"4.Delete File\n"<<"5.Delete Directory\n"<<"6.Rename File\n"<<"7.Copy File\n"<<"8.Move File\n"<<"9.Modify File\n"<<"10.Exit\n"<<endl;
+	cout<<"Enter Input: ";
+    cin>>choice;
+
+    while(1){
+        switch(choice) {
+            case 1: 
+                cout<<"Enter file content: ";
+                // cin.get(fcontent,100);
+                getline(cin,fcontent, "\n");
+                cout<<fcontent<<endl;
+
+                break;
+            case 2: 
+                break;
+            case 3: 
+                break;
+            case 4: 
+                break;
+            case 5: 
+                break;
+            case 6: 
+                break;
+            case 7: 
+                break;
+            case 8: 
+                break;
+            case 9:
+                break;
+            case 10:
+                break;
+        
+
+         }
     }
+
 }
