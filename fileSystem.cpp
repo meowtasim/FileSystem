@@ -245,14 +245,16 @@ void moveFile(file &a, directory &d)
 // Need to handle space constraints
 // Taking different types of files from os or something
 
-void read_file(file *filename){
-    for(int i = 0; i<filename->blocksUsed; i++)
+void read_file(file *filename)
+{
+    for (int i = 0; i < filename->blocksUsed; i++)
     {
-        for(int j=0; j<blockSize;j++){
-            cout<<FAT[filename->indexTable[i]].blockPointer[j];
+        for (int j = 0; j < blockSize; j++)
+        {
+            cout << FAT[filename->indexTable[i]].blockPointer[j];
         }
     }
-    cout<<endl;
+    cout << endl;
 }
 
 int main()
@@ -276,6 +278,7 @@ int main()
          << "11.Open directory\n" // changing the current directory
          << "12.Change owner\n"
          << "13.Read file\n"
+         << "14.Exit Directory\n"
          << endl;
     while (1)
     {
@@ -406,6 +409,9 @@ int main()
             {
                 read_file(f1);
             }
+            break;
+        case 14: // Need to be able to change access rights and give access according to it - Saana
+            currentDirectory=currentDirectory->parentDirectory;
             break;
         }
     }
