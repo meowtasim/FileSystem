@@ -57,6 +57,7 @@ private:
     int closeFile;
     int renameFile;
     int deleteFile;
+    directory *locationDirectory;
     // Index table------
     int *indexTable;
     int blocksUsed;
@@ -73,6 +74,7 @@ public: // Need to set default values
         delete[] indexTable;
         cout << "Destroyed file" << endl;
     }
+    friend void deleteFile(file &a);
     friend void createFile(char fileContent[], file &actualFile);
 };
 int findEmptyBlock() // need to make it constant time
@@ -121,6 +123,16 @@ void createFile(char fileContent[], file &actualFile) // Need to update director
 
 // createDirectory funtion
 // delete file
+void deleteFile(file &a)//incomplete
+{
+    // a.locationDirectory, need to delete from directory records and rearrange
+    for(int i=0;i<a.blocksUsed;i++){
+        FAT[a.indexTable[i]].used=0;//Mark block as unused
+        delete FAT[a.indexTable[i]].blockPointer;//free memory space allocated for block
+        FAT[a.indexTable[i]].blockPointer=NULL;
+    }
+    a.~file();//destroy the file object hopefully
+}
 // delete directory
 // rename
 // moving
