@@ -2,8 +2,8 @@
 #include <string>
 #include <math.h>
 #include <cstring>
-#define diskSpace 1024 // in terms of mb
-#define blockSize 1    // in terms of mb
+#define diskSpace 1024 // in terms of bytes
+#define blockSize 1    // in terms of bytes
 const int numberOfBlocks = diskSpace / blockSize;
 using namespace std;
 
@@ -17,6 +17,8 @@ public:
         delete[] blockPointer;
     }
 };
+// If an entry has value 0, that block is unused
+// initialize the FAT with all 0s representing empty blocks
 
 allocationTableBlock FAT[numberOfBlocks];
 // Find free blocks in constant time
@@ -123,6 +125,7 @@ void createFile(char fileContent[], file &actualFile) // Need to update director
 // rename
 // moving
 // copy (oit)
+// displaying the whole file system
 // Periodic defragmentation?
 // Need to handle space constraints
 // Taking different types of files from os or something
@@ -130,11 +133,33 @@ void createFile(char fileContent[], file &actualFile) // Need to update director
 
 int main()
 { // Need to make user interface(Menu):
-    // Create file, directory, delete, rename, modify, moving, copy, taking file from os or something
-    // If an entry has value 0, that block is unused
-    // initialize the FAT with all 0s representing empty blocks
+    // --Create file, directory, delete, rename,-- modify, moving, copy, taking file from os or something
+    directory rootDirectory;
     file f1;
     char sampleText[] = "Hello thereee";
+    string currentPath = "rootDirectory", displayFilesystem = "ls", makeNewFile = "new file", makeNewDirectory = "new directory", deleteObject = "delete";
+    char commandLineInput[20];
     createFile(sampleText, f1);
     // cout << strlen(sampleText) << endl;
+    while (1)
+    {
+        cout << "D:\\" << currentPath << ">"; // Display current directory like command prompt
+        cin >> commandLineInput;              // Asking some command line function from user
+        if (commandLineInput == displayFilesystem)
+        {
+            // Display all the directories and files of the currently open directory
+        }
+        else if (commandLineInput == makeNewFile)
+        {
+            // Need to call createFile
+        }
+        else if (commandLineInput == makeNewDirectory)
+        {
+            // Need to call createDirectory
+        }
+        else if (commandLineInput == deleteObject)
+        {
+            // Need to call delete function
+        }
+    }
 }
