@@ -69,14 +69,14 @@ public:
     string name;
     string creationDate;
     int directorySize;
-    directory* parentDirectory;
+    directory *parentDirectory;
     // Tabel that points to all file objects, also point towards directory objects
     file *fileRecords[20]; // for a single level directory
     int numberOfFiles = 0;
     directory *directoryRecords[5];
     int numberOfDirectories = 0;
     // Operations allowed on directories
-    directory(directory *obj=NULL):parentDirectory(obj){}//In case of making sub directories
+    directory(directory *obj = NULL) : parentDirectory(obj) {} // In case of making sub directories
     // ~directory()
     // {
     //     delete[] fileRecords;
@@ -165,11 +165,11 @@ void deleteFile(file &a) // done
     a.~file(); // destroy the file object hopefully
 }
 // delete directory
-directory* deleteDirectory(directory &d)
+directory *deleteDirectory(directory &d)
 {
-    directory* parentDirectory=d.parentDirectory;
+    directory *parentDirectory = d.parentDirectory;
     int i;
-    while (d.numberOfDirectories != 0)//Delete all content of the directory
+    while (d.numberOfDirectories != 0) // Delete all content of the directory
     {
         deleteDirectory(*d.directoryRecords[d.numberOfDirectories]);
         d.numberOfDirectories--;
@@ -179,14 +179,17 @@ directory* deleteDirectory(directory &d)
         deleteFile(*d.fileRecords[d.numberOfFiles]);
         d.numberOfFiles--;
     }
-    //Delete entry of this directory in parent directory
-    for(i=0;i<parentDirectory->numberOfDirectories;i++){
-        if(parentDirectory->directoryRecords[i]->name==d.name){
+    // Delete entry of this directory in parent directory
+    for (i = 0; i < parentDirectory->numberOfDirectories; i++)
+    {
+        if (parentDirectory->directoryRecords[i]->name == d.name)
+        {
             break;
         }
     }
-    for(i;i<parentDirectory->numberOfDirectories;i++){
-        parentDirectory->directoryRecords[i]=parentDirectory->directoryRecords[i+1];
+    for (i; i < parentDirectory->numberOfDirectories; i++)
+    {
+        parentDirectory->directoryRecords[i] = parentDirectory->directoryRecords[i + 1];
     }
     parentDirectory->numberOfDirectories--;
     delete &d;
@@ -231,7 +234,7 @@ int main()
     directory *currentDirectory = &mainDirectory;
     int choice;
     file *f1;
-    string fcontent, fileName,fileName2;
+    string fcontent, fileName, fileName2;
     cout << "\n\n                   _______--------------------FILE SYSTEM--------------------_______                   " << endl;
     cout << "\n1.Create File\n"
          << "2.Create Directory\n"
@@ -243,6 +246,7 @@ int main()
          << "8.Move File\n"
          << "9.Modify File\n"
          << "10.Exit\n"
+         << "11.Open directory\n"//changing the current directory
          << endl;
     while (1)
     {
@@ -252,7 +256,7 @@ int main()
         cin >> choice;
         switch (choice)
         {
-        case 1://Create file - Works
+        case 1: // Create file - Works
         {
             cout << "Enter file content: ";
             cin.ignore();
@@ -263,8 +267,8 @@ int main()
 
             break;
         }
-        case 2:// Create Directory - Work in progress
-        { 
+        case 2: // Create Directory - Work in progress
+        {
             if (currentDirectory->numberOfDirectories == 5)
             {
                 cout << "Error : Maximum number of subdirectories reached" << endl;
@@ -295,7 +299,7 @@ int main()
             }
             break;
         }
-        case 4: //Delete file - works
+        case 4: // Delete file - works
             cout << "Enter the name of the file you want to delete : ";
             cin >> fileName;
             f1 = findFile(currentDirectory, fileName);
@@ -306,33 +310,37 @@ int main()
             }
             deleteFile(*f1);
             break;
-        case 5://Deletes a directory and all files within it - works
-            if(currentDirectory==&mainDirectory){
-                cout<<"Cannot delete the root directory, please open the directory you want to open"<<endl;
+        case 5: // Deletes a directory and all files within it - works
+            if (currentDirectory == &mainDirectory)
+            {
+                cout << "Cannot delete the root directory, please open the directory you want to open" << endl;
             }
-            currentDirectory=deleteDirectory(*currentDirectory);
+            currentDirectory = deleteDirectory(*currentDirectory);
             break;
-        case 6://Rename file - works
-            cout<<"Enter the name of the file you want to rename : ";
-            cin>>fileName;
-            f1=findFile(currentDirectory,fileName);
+        case 6: // Rename file - works
+            cout << "Enter the name of the file you want to rename : ";
+            cin >> fileName;
+            f1 = findFile(currentDirectory, fileName);
             if (f1 == NULL)
             {
                 cout << "File does not exist in the current directory" << endl;
                 break;
             }
-            cout<<"Enter the new name of the file : ";
-            cin>>fileName2;
-            f1->name=fileName2;
-            cout<<"Rename successful"<<endl;
+            cout << "Enter the new name of the file : ";
+            cin >> fileName2;
+            f1->name = fileName2;
+            cout << "Rename successful" << endl;
             break;
-        case 7:
+        case 7: // copy file - hard
             break;
-        case 8:
+        case 8: // move file - doable
             break;
-        case 9:
+        case 9: // modify file - idk bro we need to think
             break;
-        case 10:
+        case 10: // how dare someone exit, also how to even exit switch
+            break;
+        case 11: // Open directory - doable
+
             break;
         }
     }
