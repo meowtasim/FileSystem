@@ -29,7 +29,7 @@ class file
 public:
     // metedata
     // File name------
-    string name = "Default name";
+    string name = "default";
     // Metadata------
     string creationDate;
     int fileSize;
@@ -69,17 +69,14 @@ public:
     string name;
     string creationDate;
     int directorySize;
+    directory* parentDirectory;
     // Tabel that points to all file objects, also point towards directory objects
     file *fileRecords[20]; // for a single level directory
     int numberOfFiles = 0;
     directory *directoryRecords[5];
     int numberOfDirectories = 0;
     // Operations allowed on directories
-    // directory()
-    // {
-    //     fileRecords = new file[20];
-    //     directoryRecords = new directory[5];
-    // }
+    directory(directory *obj=NULL):parentDirectory(obj){}//In case of making sub directories
     // ~directory()
     // {
     //     delete[] fileRecords;
@@ -101,13 +98,13 @@ void takeFileMetadata(file &actualFile)
 
     // need to take file name and everything from user and time
 } // |1| |2| |3| |4| |5|
-void createFile(directory &d, char fileContent[], file &actualFile)
+void createFile(directory &d, const string &fileContent, file &actualFile)
 {
     cout << "Starting file creation" << endl;
-    cout << fileContent << " size of string is " << sizeof(fileContent) << endl;
+    cout << fileContent << " size of string is " << fileContent.size() << endl;
     string a = "b";
-    int fileSize = strlen(fileContent);
-    int blocksUsed = ceil(fileSize / blockSize);
+    int fileSize = fileContent.size();
+    int blocksUsed = ceil(static_cast<double>(fileSize) / blockSize);
     actualFile.blocksUsed = blocksUsed;
     actualFile.indexTable = new int[blocksUsed]; // creates array of that many elements
     //----------------------------------------
@@ -128,9 +125,10 @@ void createFile(directory &d, char fileContent[], file &actualFile)
     }
     actualFile.fileSize = sizeof(fileContent); // updating metadata
     actualFile.locationDirectory = &d;
-    d.numberOfFiles++;
     d.fileRecords[d.numberOfFiles] = &actualFile; // Updating directory
-    takeFileMetadata(actualFile);                 // ask user meta data
+    d.numberOfFiles++;
+
+    takeFileMetadata(actualFile); // ask user meta data
     cout << "Finishing file creation" << endl;
 }
 
@@ -138,7 +136,7 @@ void createFile(directory &d, char fileContent[], file &actualFile)
 void removeFileFromDirectory(file &a)
 {
     int filePosition;
-    for (int filePosition = 0; filePosition < a.blocksUsed; filePosition++) // find file position in file list
+    for (filePosition = 0; filePosition < a.locationDirectory->numberOfFiles; filePosition++) // find file position in file list
     {
         if (a.name == a.locationDirectory->fileRecords[filePosition]->name)
         {
@@ -167,9 +165,11 @@ void deleteFile(file &a) // done
     a.~file(); // destroy the file object hopefully
 }
 // delete directory
-void deleteDirectory(directory &d)
+directory* deleteDirectory(directory &d)
 {
-    while (d.numberOfDirectories != 0)
+    directory* parentDirectory=d.parentDirectory;
+    int i;
+    while (d.numberOfDirectories != 0)//Delete all content of the directory
     {
         deleteDirectory(*d.directoryRecords[d.numberOfDirectories]);
         d.numberOfDirectories--;
@@ -179,7 +179,31 @@ void deleteDirectory(directory &d)
         deleteFile(*d.fileRecords[d.numberOfFiles]);
         d.numberOfFiles--;
     }
+    //Delete entry of this directory in parent directory
+    for(i=0;i<parentDirectory->numberOfDirectories;i++){
+        if(parentDirectory->directoryRecords[i]->name==d.name){
+            break;
+        }
+    }
+    for(i;i<parentDirectory->numberOfDirectories;i++){
+        parentDirectory->directoryRecords[i]=parentDirectory->directoryRecords[i+1];
+    }
+    parentDirectory->numberOfDirectories--;
     delete &d;
+    return parentDirectory;
+}
+
+// function to return pointer to file upon giving name
+file *findFile(directory *currentDirectory, string fileName)
+{
+    for (int i = 0; i < currentDirectory->numberOfFiles; i++)
+    {
+        if (currentDirectory->fileRecords[i]->name == fileName)
+        {
+            return currentDirectory->fileRecords[i];
+        }
+    }
+    return NULL;
 }
 // rename
 // moving
@@ -207,69 +231,100 @@ int main()
     directory *currentDirectory = &mainDirectory;
     int choice;
     file *f1;
-    char fcontent[100] = "sana";
+    string fcontent, fileName,fileName2;
     cout << "\n\n                   _______--------------------FILE SYSTEM--------------------_______                   " << endl;
-
+    cout << "\n1.Create File\n"
+         << "2.Create Directory\n"
+         << "3.View File System\n"
+         << "4.Delete File\n"
+         << "5.Delete Directory\n"
+         << "6.Rename File\n"
+         << "7.Copy File\n"
+         << "8.Move File\n"
+         << "9.Modify File\n"
+         << "10.Exit\n"
+         << endl;
     while (1)
     {
-        cout << "\n1.Create File\n"
-             << "2.Create Directory\n"
-             << "3.View File System\n"
-             << "4.Delete File\n"
-             << "5.Delete Directory\n"
-             << "6.Rename File\n"
-             << "7.Copy File\n"
-             << "8.Move File\n"
-             << "9.Modify File\n"
-             << "10.Exit\n"
-             << endl;
+
+        // cin.ignore();
         cout << "Enter Input: ";
         cin >> choice;
         switch (choice)
         {
-        case 1:
+        case 1://Create file - Works
         {
             cout << "Enter file content: ";
-            // // cin.get(fcontent,100);
-            // getline(cin >> ws, fcontent);
+            cin.ignore();
+            getline(cin, fcontent);
             f1 = new file;
             // cout<<fcontent<<endl;
             createFile(*currentDirectory, fcontent, *f1);
 
             break;
         }
-        case 2:
-        { // Create Directory
+        case 2:// Create Directory - Work in progress
+        { 
             if (currentDirectory->numberOfDirectories == 5)
             {
                 cout << "Error : Maximum number of subdirectories reached" << endl;
             }
             else
             {
-                directory *d1 = new directory; // need to take parameters from user
+                directory *d1 = new directory(currentDirectory); // need to take parameters from user
                 currentDirectory->numberOfDirectories++;
                 currentDirectory->directoryRecords[currentDirectory->numberOfDirectories] = d1;
             }
             break;
         }
-        case 3:
+        case 3: // Display - works
         {
-            cout << " : " << currentDirectory->fileRecords[0]->name << endl;
-            // for (int i = 0; i < currentDirectory->numberOfDirectories; i++)
-            // {
-            //     cout << i << " : " << currentDirectory->directoryRecords[i]->name << endl;
-            // }
-            // for (int i = 0; i < currentDirectory->numberOfFiles; i++)
-            // {
-            //     cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << endl;
-            // }
+            // cout << " : " << currentDirectory->fileRecords[0]->name << endl;
+            if (currentDirectory->numberOfDirectories == 0 && currentDirectory->numberOfFiles == 0)
+            {
+                cout << "Current Directory is empty " << endl;
+                break;
+            }
+            for (int i = 0; i < currentDirectory->numberOfDirectories; i++)
+            {
+                cout << i << " : " << currentDirectory->directoryRecords[i]->name << endl;
+            }
+            for (int i = 0; i < currentDirectory->numberOfFiles; i++)
+            {
+                cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << endl;
+            }
             break;
         }
-        case 4:
+        case 4: //Delete file - works
+            cout << "Enter the name of the file you want to delete : ";
+            cin >> fileName;
+            f1 = findFile(currentDirectory, fileName);
+            if (f1 == NULL)
+            {
+                cout << "File does not exist in the current directory" << endl;
+                break;
+            }
+            deleteFile(*f1);
             break;
-        case 5:
+        case 5://Deletes a directory and all files within it - works
+            if(currentDirectory==&mainDirectory){
+                cout<<"Cannot delete the root directory, please open the directory you want to open"<<endl;
+            }
+            currentDirectory=deleteDirectory(*currentDirectory);
             break;
-        case 6:
+        case 6://Rename file - works
+            cout<<"Enter the name of the file you want to rename : ";
+            cin>>fileName;
+            f1=findFile(currentDirectory,fileName);
+            if (f1 == NULL)
+            {
+                cout << "File does not exist in the current directory" << endl;
+                break;
+            }
+            cout<<"Enter the new name of the file : ";
+            cin>>fileName2;
+            f1->name=fileName2;
+            cout<<"Rename successful"<<endl;
             break;
         case 7:
             break;
