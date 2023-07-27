@@ -4,19 +4,19 @@
 #include <cstring>
 #include <ctime>
 #define diskSpace 1024 // in terms of bytes
-#define blockSize 3   // in terms of bytes
+#define blockSize 1    // in terms of bytes
 const int numberOfBlocks = diskSpace / blockSize;
 using namespace std;
 
 class allocationTableBlock // done
 {
-    public:
-        int used = 0;              // Default value indicating unoccupied
-        char *blockPointer = NULL; // Pointer to actual memory of block
-        ~allocationTableBlock()
-        {
-            delete[] blockPointer;
-        }
+public:
+    int used = 0;              // Default value indicating unoccupied
+    char *blockPointer = NULL; // Pointer to actual memory of block
+    ~allocationTableBlock()
+    {
+        delete[] blockPointer;
+    }
 };
 // initialize the FAT with all 0s representing empty blocks
 //??????????????????????????????????????????????????Create an array of free blocks - using stack?
@@ -24,64 +24,63 @@ allocationTableBlock FAT[numberOfBlocks];
 // Finds free blocks in constant time
 class file;
 class directory;
-
 class file
 {
-    public:
-        // metadata
-        // File name------
-        string name = "default";
-        // Metadata------
-        string creationDate;
-        int fileSize;
-        string dataType;
-        // permissions
-        bool readFile;
-        bool writeFile;
-        bool executeFile;
-        bool openFile;
-        bool closeFile;
-        int deleteFile;
-        directory *locationDirectory; // Directory in which file exists
-        // Index table------
-        int *indexTable;
-        int blocksUsed;
+public:
+    // metedata
+    // File name------
+    string name = "default";
+    // Metadata------
+    string creationDate;
+    int fileSize;
+    string dataType;
+    // permissions
+    bool readFile;
+    bool writeFile;
+    bool executeFile;
+    bool openFile;
+    bool closeFile;
+    int deleteFile;
+    directory *locationDirectory; // Directory in which file exists
+    // Index table------
+    int *indexTable;
+    int blocksUsed;
 
-        // public: // Need to set default values
-        // Operations allowed on files
-        file(bool a = 0)
-        { // 0 means public user and 1 means owner
-            // set up permissions for public and owner
-            cout << "Made file" << endl;
-            readFile = openFile = closeFile = 1;
-            writeFile = executeFile = a;
-        }
-        ~file()
-        {
-            delete[] indexTable;
-            cout << "Destroyed file" << endl;
-        }
+    // public: // Need to set default values
+    // Operations allowed on files
+    file(bool a = 0)
+    { // 0 means public user and 1 means owner
+        // set up permissions for public and owner
+        cout << "Made file" << endl;
+        readFile = openFile = closeFile = 1;
+        writeFile = executeFile = a;
+    }
+    ~file()
+    {
+        delete[] indexTable;
+        cout << "Destroyed file" << endl;
+    }
 };
 class directory
 {
-    public:
-        // metedata
-        string name;
-        string creationDate;
-        int directorySize = 0;
-        directory *parentDirectory;
-        // Tabel that points to all file objects, also point towards directory objects
-        file *fileRecords[20]; // for a single level directory
-        int numberOfFiles = 0;
-        directory *directoryRecords[5];
-        int numberOfDirectories = 0;
-        // Operations allowed on directories
-        directory(directory *obj = NULL) : parentDirectory(obj) {} // In case of making sub directories
-        // ~directory()
-        // {
-        //     delete[] fileRecords;
-        //     delete[] directoryRecords;
-        // }
+public:
+    // metedata
+    string name;
+    string creationDate;
+    int directorySize = 0;
+    directory *parentDirectory;
+    // Tabel that points to all file objects, also point towards directory objects
+    file *fileRecords[20]; // for a single level directory
+    int numberOfFiles = 0;
+    directory *directoryRecords[5];
+    int numberOfDirectories = 0;
+    // Operations allowed on directories
+    directory(directory *obj = NULL) : parentDirectory(obj) {} // In case of making sub directories
+    // ~directory()
+    // {
+    //     delete[] fileRecords;
+    //     delete[] directoryRecords;
+    // }
 };
 int findEmptyBlock() // need to make it constant time
 {
@@ -125,7 +124,6 @@ void createFile(directory &d, const string &fileContent, file &actualFile)
         for (i = 0; i < blockSize; i++)
         {
             FAT[blockNumber].blockPointer[i] = fileContent[i + pointer];
-            cout<<fileContent[i+pointer]<<endl;
         }
         pointer += i;
     }
@@ -214,6 +212,19 @@ file *findFile(directory *currentDirectory, string fileName)
     }
     return NULL;
 }
+
+directory *findDirectory(directory *currentDirectory, string directoryName)
+{
+    for (int i = 0; i < currentDirectory->numberOfDirectories; i++)
+    {
+        if (currentDirectory->directoryRecords[i]->name == directoryName)
+        {
+            return currentDirectory->directoryRecords[i];
+        }
+    }
+    return NULL;
+}
+
 // rename
 // moving
 void moveFile(file &a, directory &d)
@@ -223,10 +234,10 @@ void moveFile(file &a, directory &d)
         cout << "Error : Maximum capacity of directory reached" << endl;
         return;
     }
-    d.numberOfFiles++;
     d.fileRecords[d.numberOfFiles] = &a; // first add file to new directory
-    removeFileFromDirectory(a);          // Remove file from previous directory
-    a.locationDirectory = &d;            // Update file metadata
+    d.numberOfFiles++;
+    removeFileFromDirectory(a); // Remove file from previous directory
+    a.locationDirectory = &d;   // Update file metadata
 }
 // copy (oit)
 // displaying the whole file system--Main
@@ -285,7 +296,7 @@ int main()
 
             break;
         }
-        case 2: // Create Directory - Work in progress
+        case 2: // Create Directory - Done
         {
             if (currentDirectory->numberOfDirectories == 5)
             {
@@ -294,8 +305,11 @@ int main()
             else
             {
                 directory *d1 = new directory(currentDirectory); // need to take parameters from user
-                currentDirectory->numberOfDirectories++;
+                cout << "Enter name of new directory  : ";
+                cin >> fileName;
+                d1->name = fileName;
                 currentDirectory->directoryRecords[currentDirectory->numberOfDirectories] = d1;
+                currentDirectory->numberOfDirectories++;
             }
             break;
         }
@@ -332,6 +346,7 @@ int main()
             if (currentDirectory == &mainDirectory)
             {
                 cout << "Cannot delete the root directory, please open the directory you want to open" << endl;
+                break;
             }
             currentDirectory = deleteDirectory(*currentDirectory);
             break;
@@ -349,18 +364,33 @@ int main()
             f1->name = fileName2;
             cout << "Rename successful" << endl;
             break;
-        case 7: // copy file - hard
+        case 7: // copy file - hard - Mutasim
             break;
         case 8: // move file - doable
+        {
+            string fname, destDirectory;
+            cout << "Enter filename: ";
+            cin >> fname;
+            cout << "Enter directory name: ";
+            cin >> destDirectory;
+            file *f = findFile(currentDirectory, fname);
+            directory *d = findDirectory(currentDirectory, destDirectory);
+            moveFile(*f, *d);
             break;
+        }
         case 9: // modify file - idk bro we need to think
             break;
         case 10: // how dare someone exit, also how to even exit switch
             exit(1);
-        case 11: // Open directory - doable
-
+        case 11:
+        { // Open directory - doable - Mutasim
+            cout << "Enter the name of directory you want to open : ";
+            cin >> fileName2;
+            directory *d = findDirectory(currentDirectory, fileName2);
+            currentDirectory = d;
             break;
-        case 12: // Need to be able to change access rights and give access according to it
+        }
+        case 12: // Need to be able to change access rights and give access according to it - Saana
 
             break;
         case 13: // Read file - doable to hard
@@ -372,7 +402,8 @@ int main()
                 cout << "File does not exist in the current directory" << endl;
                 break;
             }
-            else{
+            else
+            {
                 read_file(f1);
             }
             break;
