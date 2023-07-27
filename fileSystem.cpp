@@ -21,6 +21,8 @@ public:
 // initialize the FAT with all 0s representing empty blocks
 //??????????????????????????????????????????????????Create an array of free blocks - using stack?
 allocationTableBlock FAT[numberOfBlocks];
+int stack[numberOfBlocks],top=numberOfBlocks-1;
+
 // Finds free blocks in constant time
 class file;
 class directory;
@@ -82,15 +84,9 @@ public:
     //     delete[] directoryRecords;
     // }
 };
-int findEmptyBlock() // need to make it constant time
+int findEmptyBlock() // constant time
 {
-    for (int i = 0; i < numberOfBlocks; i++)
-    {
-        if (FAT[i].used == 0)
-        {
-            return i;
-        }
-    }
+    return stack[top--];
 } // Returns the index of the first empty block
 void takeFileMetadata(file &actualFile)
 {
@@ -163,6 +159,8 @@ void deleteFile(file &a) // done
     for (int i = 0; i < a.blocksUsed; i++)
     {
         FAT[a.indexTable[i]].used = 0;            // Mark block as unused
+        top++;
+        stack[top]=a.indexTable[i];
         delete FAT[a.indexTable[i]].blockPointer; // free memory space allocated for block
         FAT[a.indexTable[i]].blockPointer = NULL;
     }
@@ -259,6 +257,9 @@ void read_file(file *filename)
 
 int main()
 {
+    for(int i=0;i<numberOfBlocks;i++){
+        stack[i]=numberOfBlocks-i-1;
+    }
     directory mainDirectory;
     directory *currentDirectory = &mainDirectory;
     int choice;
@@ -330,7 +331,7 @@ int main()
             }
             for (int i = 0; i < currentDirectory->numberOfFiles; i++)
             {
-                cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << endl;
+                cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << ".txt"<<endl;
             }
             break;
         }
