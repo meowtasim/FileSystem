@@ -37,12 +37,10 @@ public:
     int fileSize;
     string dataType;
     // permissions
-    bool readFile;
-    bool writeFile;
-    bool executeFile;
-    bool openFile;
-    bool closeFile;
-    int deleteFile;
+    static bool readFile;
+    static bool writeFile;
+    static bool executeFile;
+    static bool deleteFile;
     directory *locationDirectory; // Directory in which file exists
     // Index table------
     int *indexTable;
@@ -54,8 +52,8 @@ public:
     { // 0 means public user and 1 means owner
         // set up permissions for public and owner
         cout << "Made file" << endl;
-        readFile = openFile = closeFile = 1;
-        writeFile = executeFile = a;
+        // readFile = openFile = closeFile = 1;
+        // writeFile = executeFile = a;
     }
     ~file()
     {
@@ -63,6 +61,12 @@ public:
         cout << "Destroyed file" << endl;
     }
 };
+
+bool file::readFile = true;
+bool file::writeFile = false;
+bool file::executeFile = true;
+bool file::deleteFile = false;
+
 class directory
 {
 public:
@@ -84,10 +88,13 @@ public:
     //     delete[] directoryRecords;
     // }
 };
+
+
 int findEmptyBlock() // constant time
 {
     return stack[top--];
 } // Returns the index of the first empty block
+
 void takeFileMetadata(file &actualFile)
 {
     string filename;
@@ -243,20 +250,19 @@ void moveFile(file &a, directory &d)
 // Need to handle space constraints
 // Taking different types of files from os or something
 
-void read_file(file *filename)
-{
-    for (int i = 0; i < filename->blocksUsed; i++)
+void read_file(file *filename){
+    for(int i = 0; i<filename->blocksUsed; i++)
     {
-        for (int j = 0; j < blockSize; j++)
-        {
-            cout << FAT[filename->indexTable[i]].blockPointer[j];
+        for(int j=0; j<blockSize;j++){
+            cout<<FAT[filename->indexTable[i]].blockPointer[j];
         }
     }
-    cout << endl;
+    cout<<endl;
 }
 
 int main()
 {
+    int owner = 0;
     for(int i=0;i<numberOfBlocks;i++){
         stack[i]=numberOfBlocks-i-1;
     }
@@ -279,7 +285,6 @@ int main()
          << "11.Open directory\n" // changing the current directory
          << "12.Change owner\n"
          << "13.Read file\n"
-         << "14.Exit Directory\n"
          << endl;
     while (1)
     {
@@ -291,29 +296,39 @@ int main()
         {
         case 1: // Create file - Works
         {
-            cout << "Enter file content: ";
-            cin.ignore();
-            getline(cin, fcontent);
-            f1 = new file;
-            // cout<<fcontent<<endl;
-            createFile(*currentDirectory, fcontent, *f1);
+            if (owner==1){
+                cout << "Enter file content: ";
+                cin.ignore();
+                getline(cin, fcontent);
+                f1 = new file;
+                // cout<<fcontent<<endl;
+                createFile(*currentDirectory, fcontent, *f1);
+            }
+            else {
+                cout<<"Unauthorized Access"<<endl;
+            }
 
             break;
         }
         case 2: // Create Directory - Done
         {
-            if (currentDirectory->numberOfDirectories == 5)
-            {
-                cout << "Error : Maximum number of subdirectories reached" << endl;
+            if(owner==1){
+                if (currentDirectory->numberOfDirectories == 5)
+                {
+                    cout << "Error : Maximum number of subdirectories reached" << endl;
+                }
+                else
+                {
+                    directory *d1 = new directory(currentDirectory); // need to take parameters from user
+                    cout << "Enter name of new directory  : ";
+                    cin >> fileName;
+                    d1->name = fileName;
+                    currentDirectory->directoryRecords[currentDirectory->numberOfDirectories] = d1;
+                    currentDirectory->numberOfDirectories++;
+                }
             }
-            else
-            {
-                directory *d1 = new directory(currentDirectory); // need to take parameters from user
-                cout << "Enter name of new directory  : ";
-                cin >> fileName;
-                d1->name = fileName;
-                currentDirectory->directoryRecords[currentDirectory->numberOfDirectories] = d1;
-                currentDirectory->numberOfDirectories++;
+            else{
+                cout<<"Unauthorized Access"<<endl;
             }
             break;
         }
@@ -331,55 +346,80 @@ int main()
             }
             for (int i = 0; i < currentDirectory->numberOfFiles; i++)
             {
-                cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << ".txt"<<endl;
+                cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << endl;
             }
-            break;
+             break;
         }
+            
+           
+
         case 4: // Delete file - works
-            cout << "Enter the name of the file you want to delete : ";
-            cin >> fileName;
-            f1 = findFile(currentDirectory, fileName);
-            if (f1 == NULL)
-            {
-                cout << "File does not exist in the current directory" << endl;
-                break;
+            if(owner==1){
+                cout << "Enter the name of the file you want to delete : ";
+                cin >> fileName;
+                f1 = findFile(currentDirectory, fileName);
+                if (f1 == NULL)
+                {
+                    cout << "File does not exist in the current directory" << endl;
+                    break;
+                }
+                deleteFile(*f1);
             }
-            deleteFile(*f1);
+            else{
+                cout<<"Unauthorized Access"<<endl;
+            }
             break;
         case 5: // Deletes a directory and all files within it - works
-            if (currentDirectory == &mainDirectory)
-            {
-                cout << "Cannot delete the root directory, please open the directory you want to open" << endl;
-                break;
+            if(owner==1){
+                if (currentDirectory == &mainDirectory)
+                {
+                    cout << "Cannot delete the root directory, please open the directory you want to open" << endl;
+                    break;
+                }
+                currentDirectory = deleteDirectory(*currentDirectory);
             }
-            currentDirectory = deleteDirectory(*currentDirectory);
+            else{
+                cout<<"Unauthorized Access"<<endl;
+            }
             break;
         case 6: // Rename file - works
-            cout << "Enter the name of the file you want to rename : ";
-            cin >> fileName;
-            f1 = findFile(currentDirectory, fileName);
-            if (f1 == NULL)
-            {
-                cout << "File does not exist in the current directory" << endl;
-                break;
+            if(owner==1){
+                cout << "Enter the name of the file you want to rename : ";
+                cin >> fileName;
+                f1 = findFile(currentDirectory, fileName);
+                if (f1 == NULL)
+                {
+                    cout << "File does not exist in the current directory" << endl;
+                    break;
+                }
+                cout << "Enter the new name of the file : ";
+                cin >> fileName2;
+                f1->name = fileName2;
+                cout << "Rename successful" << endl;
             }
-            cout << "Enter the new name of the file : ";
-            cin >> fileName2;
-            f1->name = fileName2;
-            cout << "Rename successful" << endl;
+            else{
+                cout<<"Unauthorized Access"<<endl;
+            }
             break;
         case 7: // copy file - hard - Mutasim
             break;
         case 8: // move file - doable
         {
-            string fname, destDirectory;
-            cout << "Enter filename: ";
-            cin >> fname;
-            cout << "Enter directory name: ";
-            cin >> destDirectory;
-            file *f = findFile(currentDirectory, fname);
-            directory *d = findDirectory(currentDirectory, destDirectory);
-            moveFile(*f, *d);
+            if(owner==1){
+                string fname, destDirectory;
+                cout << "Enter filename: ";
+                cin >> fname;
+                cout << "Enter directory name: ";
+                cin >> destDirectory;
+                file *f = findFile(currentDirectory, fname);
+                directory *d = findDirectory(currentDirectory, destDirectory);
+                moveFile(*f, *d);
+                cout<< "Moved file successfully"<<endl;
+            }
+            
+            else{
+                cout<<"Unauthorized Access"<<endl;
+            }
             break;
         }
         case 9: // modify file - idk bro we need to think
@@ -395,8 +435,40 @@ int main()
             break;
         }
         case 12: // Need to be able to change access rights and give access according to it - Saana
+        {
+            bool ans;
+            if(owner == 0){
+                cout<<"Authorization Level -> Public "<<endl;
+            }
+            else{
+                cout<<"Authorization Level -> Owner "<<endl;
+            }
+            cout<<"Do you want to change ownership? ";
+            cin>>ans;
+            if(ans==1 && owner==0){
+                owner = 1;
+                f1->readFile = true;
+                f1->writeFile = true;
+                f1->executeFile = true;
+                f1->deleteFile = true;
+                
+            }
+            else if(ans==1 && owner==1){
+                owner = 0;
+                 f1->readFile = true;
+                 f1->writeFile = false;
+                 f1->executeFile = true;
+                 f1->deleteFile = false;
+                
 
+            }
+            else{
+                break;
+            }
+
+        }
             break;
+
         case 13: // Read file - doable to hard
             cout << "Enter the name of the file you want to read : ";
             cin >> fileName;
@@ -410,9 +482,6 @@ int main()
             {
                 read_file(f1);
             }
-            break;
-        case 14: // Need to be able to change access rights and give access according to it - Saana
-            currentDirectory=currentDirectory->parentDirectory;
             break;
         }
     }
