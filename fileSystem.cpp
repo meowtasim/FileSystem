@@ -2,6 +2,7 @@
 #include <string>
 #include <math.h>
 #include <cstring>
+#include <ctime>
 #define diskSpace 1024 // in terms of bytes
 #define blockSize 1    // in terms of bytes
 const int numberOfBlocks = diskSpace / blockSize;
@@ -10,18 +11,17 @@ using namespace std;
 class allocationTableBlock // done
 {
 public:
-    int used = 0; // Default value indicating unoccupied
-    char *blockPointer = NULL;
+    int used = 0;              // Default value indicating unoccupied
+    char *blockPointer = NULL; // Pointer to actual memory of block
     ~allocationTableBlock()
     {
         delete[] blockPointer;
     }
 };
-// If an entry has value 0, that block is unused
 // initialize the FAT with all 0s representing empty blocks
-
+//??????????????????????????????????????????????????Create an array of free blocks - using stack?
 allocationTableBlock FAT[numberOfBlocks];
-// Find free blocks in constant time
+// Finds free blocks in constant time
 class file;
 class directory;
 class file
@@ -40,9 +40,8 @@ public:
     bool executeFile;
     bool openFile;
     bool closeFile;
-    int renameFile;
     int deleteFile;
-    directory *locationDirectory;
+    directory *locationDirectory; // Directory in which file exists
     // Index table------
     int *indexTable;
     int blocksUsed;
@@ -68,7 +67,7 @@ public:
     // metedata
     string name;
     string creationDate;
-    int directorySize;
+    int directorySize = 0;
     directory *parentDirectory;
     // Tabel that points to all file objects, also point towards directory objects
     file *fileRecords[20]; // for a single level directory
@@ -95,15 +94,20 @@ int findEmptyBlock() // need to make it constant time
 } // Returns the index of the first empty block
 void takeFileMetadata(file &actualFile)
 {
-
+    string filename;
+    cout << "Enter the name of the file : ";
+    cin >> filename;
+    actualFile.name = filename;
+    time_t now = time(0);
+    actualFile.creationDate = ctime(&now);
     // need to take file name and everything from user and time
-} // |1| |2| |3| |4| |5|
+}
 void createFile(directory &d, const string &fileContent, file &actualFile)
 {
     cout << "Starting file creation" << endl;
     cout << fileContent << " size of string is " << fileContent.size() << endl;
-    string a = "b";
-    int fileSize = fileContent.size();
+    int fileSize = fileContent.size(); // Calculating size of the file
+    d.directorySize += fileSize;       // Update size of directory
     int blocksUsed = ceil(static_cast<double>(fileSize) / blockSize);
     actualFile.blocksUsed = blocksUsed;
     actualFile.indexTable = new int[blocksUsed]; // creates array of that many elements
@@ -146,8 +150,8 @@ void removeFileFromDirectory(file &a)
     for (int i = filePosition; i < a.locationDirectory->numberOfFiles; i++) // shifting remaining entries
     {
         a.locationDirectory->fileRecords[i] = a.locationDirectory->fileRecords[i + 1]; // shift by 1
-        a.locationDirectory->numberOfFiles--;
     }
+    a.locationDirectory->numberOfFiles--;
 } // Succesfully removed file from directory
 
 // createDirectory funtion-->In switch cases
@@ -246,7 +250,9 @@ int main()
          << "8.Move File\n"
          << "9.Modify File\n"
          << "10.Exit\n"
-         << "11.Open directory\n"//changing the current directory
+         << "11.Open directory\n" // changing the current directory
+         << "12.Change owner\n"
+         << "13.Read file\n"
          << endl;
     while (1)
     {
@@ -338,9 +344,14 @@ int main()
         case 9: // modify file - idk bro we need to think
             break;
         case 10: // how dare someone exit, also how to even exit switch
-            break;
+            exit(1);
         case 11: // Open directory - doable
 
+            break;
+        case 12: // Need to be able to change access rights and give access according to it
+
+            break;
+        case 13: // Read file - doable to hard
             break;
         }
     }
