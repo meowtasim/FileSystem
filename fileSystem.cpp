@@ -248,7 +248,7 @@ void moveFile(file &a, directory &d)
 // Need to handle space constraints
 // Taking different types of files from os or something
 
-void read_file(file *filename, file* fileContent = NULL)
+char* read_file(file *filename, char* fileContent = NULL)
 {
     if(fileContent==NULL){
         for(int i = 0; i<filename->blocksUsed; i++)
@@ -284,7 +284,8 @@ int main()
     directory *currentDirectory = &mainDirectory;
     int choice;
     file *f1;
-    string fcontent, fileName, fileName2;
+    directory *d1;
+    string fcontent, fileName, fileName2, directoryName;
     cout << "\n\n                   _______--------------------FILE SYSTEM--------------------_______                   " << endl;
     cout << "\n1.Create File\n"
          << "2.Create Directory\n"
