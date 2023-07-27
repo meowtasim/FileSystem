@@ -24,45 +24,22 @@ allocationTableBlock FAT[numberOfBlocks];
 // Find free blocks in constant time
 class file;
 class directory;
-class directory
-{
-private:
-    // metedata
-    string name;
-    string creationDate;
-    int directorySize;
-    // Tabel that points to all file objects, also point towards directory objects
-    file *fileRecords; // for a single level directory
-    int numberOfFiles = 0;
-    directory *directoryRecords;
-    int numberOfDirectories = 0;
-
-public:
-    // Operations allowed on directories
-    directory()
-    {
-        fileRecords = new file[20];
-        directoryRecords = new directory[5];
-    }
-    friend void removeFileFromDirectory(file &a);
-    friend void moveFile(file &a, directory &d);
-};
 class file
 {
-private:
+public:
     // metedata
     // File name------
-    string name;
+    string name = "Default name";
     // Metadata------
     string creationDate;
     int fileSize;
     string dataType;
     // permissions
-    int readFile;
-    int writeFile;
-    int executeFile;
-    int openFile;
-    int closeFile;
+    bool readFile;
+    bool writeFile;
+    bool executeFile;
+    bool openFile;
+    bool closeFile;
     int renameFile;
     int deleteFile;
     directory *locationDirectory;
@@ -70,22 +47,44 @@ private:
     int *indexTable;
     int blocksUsed;
 
-public: // Need to set default values
+    // public: // Need to set default values
     // Operations allowed on files
-    file(int a = 0)
+    file(bool a = 0)
     { // 0 means public user and 1 means owner
         // set up permissions for public and owner
         cout << "Made file" << endl;
+        readFile = openFile = closeFile = 1;
+        writeFile = executeFile = a;
     }
     ~file()
     {
         delete[] indexTable;
         cout << "Destroyed file" << endl;
     }
-    friend void deleteFile(file &a);
-    friend void createFile(char fileContent[], file &actualFile);
-    friend void removeFileFromDirectory(file &a);
-    friend void moveFile(file &a, directory &d);
+};
+class directory
+{
+public:
+    // metedata
+    string name;
+    string creationDate;
+    int directorySize;
+    // Tabel that points to all file objects, also point towards directory objects
+    file *fileRecords[20]; // for a single level directory
+    int numberOfFiles = 0;
+    directory *directoryRecords[5];
+    int numberOfDirectories = 0;
+    // Operations allowed on directories
+    // directory()
+    // {
+    //     fileRecords = new file[20];
+    //     directoryRecords = new directory[5];
+    // }
+    // ~directory()
+    // {
+    //     delete[] fileRecords;
+    //     delete[] directoryRecords;
+    // }
 };
 int findEmptyBlock() // need to make it constant time
 {
@@ -102,7 +101,7 @@ void takeFileMetadata(file &actualFile)
 
     // need to take file name and everything from user and time
 } // |1| |2| |3| |4| |5|
-void createFile(char fileContent[], file &actualFile) // Need to update directory
+void createFile(directory &d, char fileContent[], file &actualFile)
 {
     cout << "Starting file creation" << endl;
     cout << fileContent << " size of string is " << sizeof(fileContent) << endl;
@@ -128,7 +127,10 @@ void createFile(char fileContent[], file &actualFile) // Need to update director
         pointer += i;
     }
     actualFile.fileSize = sizeof(fileContent); // updating metadata
-    takeFileMetadata(actualFile);              // ask user meta data
+    actualFile.locationDirectory = &d;
+    d.numberOfFiles++;
+    d.fileRecords[d.numberOfFiles] = &actualFile; // Updating directory
+    takeFileMetadata(actualFile);                 // ask user meta data
     cout << "Finishing file creation" << endl;
 }
 
@@ -136,21 +138,22 @@ void createFile(char fileContent[], file &actualFile) // Need to update director
 void removeFileFromDirectory(file &a)
 {
     int filePosition;
-    for (int filePosition = 0; filePosition < a.blocksUsed; filePosition++)// find file position in file list
+    for (int filePosition = 0; filePosition < a.blocksUsed; filePosition++) // find file position in file list
     {
-        if (a.name == a.locationDirectory->fileRecords[filePosition].name)
-        { 
+        if (a.name == a.locationDirectory->fileRecords[filePosition]->name)
+        {
             break;
         }
-    } 
-    for (int i = filePosition; i < a.locationDirectory->numberOfFiles; i++)// shifting remaining entries
+    }
+    for (int i = filePosition; i < a.locationDirectory->numberOfFiles; i++) // shifting remaining entries
     {
         a.locationDirectory->fileRecords[i] = a.locationDirectory->fileRecords[i + 1]; // shift by 1
         a.locationDirectory->numberOfFiles--;
     }
 } // Succesfully removed file from directory
 
-// createDirectory funtion
+// createDirectory funtion-->In switch cases
+
 // delete file
 void deleteFile(file &a) // done
 {
@@ -164,6 +167,20 @@ void deleteFile(file &a) // done
     a.~file(); // destroy the file object hopefully
 }
 // delete directory
+void deleteDirectory(directory &d)
+{
+    while (d.numberOfDirectories != 0)
+    {
+        deleteDirectory(*d.directoryRecords[d.numberOfDirectories]);
+        d.numberOfDirectories--;
+    }
+    while (d.numberOfFiles != 0)
+    {
+        deleteFile(*d.fileRecords[d.numberOfFiles]);
+        d.numberOfFiles--;
+    }
+    delete &d;
+}
 // rename
 // moving
 void moveFile(file &a, directory &d)
@@ -174,55 +191,94 @@ void moveFile(file &a, directory &d)
         return;
     }
     d.numberOfFiles++;
-    d.fileRecords[d.numberOfFiles] = a; // first add file to new directory
-    removeFileFromDirectory(a);         // Remove file from previous directory
-    a.locationDirectory = &d;           // Update file metadata
+    d.fileRecords[d.numberOfFiles] = &a; // first add file to new directory
+    removeFileFromDirectory(a);          // Remove file from previous directory
+    a.locationDirectory = &d;            // Update file metadata
 }
 // copy (oit)
-// displaying the whole file system
+// displaying the whole file system--Main
 // Periodic defragmentation?
 // Need to handle space constraints
 // Taking different types of files from os or something
 
-
-int main(){
+int main()
+{
+    directory mainDirectory;
+    directory *currentDirectory = &mainDirectory;
     int choice;
-    char fcontent[100];
-	cout<<"\n\n                   _______--------------------FILE SYSTEM--------------------_______                   "<<endl;
-    cout<<"\n1.Create File\n"<<"2.Create Directory\n"<<"3.View File System\n"<<"4.Delete File\n"<<"5.Delete Directory\n"<<"6.Rename File\n"<<"7.Copy File\n"<<"8.Move File\n"<<"9.Modify File\n"<<"10.Exit\n"<<endl;
-	cout<<"Enter Input: ";
-    cin>>choice;
+    file *f1;
+    char fcontent[100] = "sana";
+    cout << "\n\n                   _______--------------------FILE SYSTEM--------------------_______                   " << endl;
 
-    while(1){
-        switch(choice) {
-            case 1: 
-                cout<<"Enter file content: ";
-                // cin.get(fcontent,100);
-                getline(cin,fcontent, "\n");
-                cout<<fcontent<<endl;
+    while (1)
+    {
+        cout << "\n1.Create File\n"
+             << "2.Create Directory\n"
+             << "3.View File System\n"
+             << "4.Delete File\n"
+             << "5.Delete Directory\n"
+             << "6.Rename File\n"
+             << "7.Copy File\n"
+             << "8.Move File\n"
+             << "9.Modify File\n"
+             << "10.Exit\n"
+             << endl;
+        cout << "Enter Input: ";
+        cin >> choice;
+        switch (choice)
+        {
+        case 1:
+        {
+            cout << "Enter file content: ";
+            // // cin.get(fcontent,100);
+            // getline(cin >> ws, fcontent);
+            f1 = new file;
+            // cout<<fcontent<<endl;
+            createFile(*currentDirectory, fcontent, *f1);
 
-                break;
-            case 2: 
-                break;
-            case 3: 
-                break;
-            case 4: 
-                break;
-            case 5: 
-                break;
-            case 6: 
-                break;
-            case 7: 
-                break;
-            case 8: 
-                break;
-            case 9:
-                break;
-            case 10:
-                break;
-        
-
-         }
+            break;
+        }
+        case 2:
+        { // Create Directory
+            if (currentDirectory->numberOfDirectories == 5)
+            {
+                cout << "Error : Maximum number of subdirectories reached" << endl;
+            }
+            else
+            {
+                directory *d1 = new directory; // need to take parameters from user
+                currentDirectory->numberOfDirectories++;
+                currentDirectory->directoryRecords[currentDirectory->numberOfDirectories] = d1;
+            }
+            break;
+        }
+        case 3:
+        {
+            cout << " : " << currentDirectory->fileRecords[0]->name << endl;
+            // for (int i = 0; i < currentDirectory->numberOfDirectories; i++)
+            // {
+            //     cout << i << " : " << currentDirectory->directoryRecords[i]->name << endl;
+            // }
+            // for (int i = 0; i < currentDirectory->numberOfFiles; i++)
+            // {
+            //     cout << i + currentDirectory->numberOfDirectories << " : " << currentDirectory->fileRecords[i]->name << endl;
+            // }
+            break;
+        }
+        case 4:
+            break;
+        case 5:
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            break;
+        case 9:
+            break;
+        case 10:
+            break;
+        }
     }
-
 }
