@@ -248,29 +248,33 @@ void moveFile(file &a, directory &d)
 // Need to handle space constraints
 // Taking different types of files from os or something
 
-char* read_file(file *filename, char* fileContent = NULL)
+char *read_file(file *filename, char *fileContent = NULL)
 {
-    if(fileContent==NULL){
-        for(int i = 0; i<filename->blocksUsed; i++)
+    if (fileContent == NULL)
+    {
+        for (int i = 0; i < filename->blocksUsed; i++)
         {
-            for(int j=0; j<blockSize;j++){
-                cout<<FAT[filename->indexTable[i]].blockPointer[j];
+            for (int j = 0; j < blockSize; j++)
+            {
+                cout << FAT[filename->indexTable[i]].blockPointer[j];
             }
         }
-        cout<<endl;
+        cout << endl;
     }
-    else{
+    else
+    {
         int count = 0;
-        for(int i = 0; i<filename->blocksUsed; i++)
+        for (int i = 0; i < filename->blocksUsed; i++)
         {
-            for(int j=0; j<blockSize;j++){
+            for (int j = 0; j < blockSize; j++)
+            {
                 fileContent[count++] = FAT[filename->indexTable[i]].blockPointer[j];
             }
-        }  
-        return fileContent; 
+        }
+        return fileContent;
     }
 
-    cout<<endl;
+    cout << endl;
 }
 
 int main()
@@ -361,11 +365,11 @@ int main()
             }
             for (int i = 0; i < currentDirectory->numberOfDirectories; i++)
             {
-                cout << i+1 << " : " << currentDirectory->directoryRecords[i]->name << endl;
+                cout << i + 1 << " : " << currentDirectory->directoryRecords[i]->name << endl;
             }
             for (int i = 0; i < currentDirectory->numberOfFiles; i++)
             {
-                cout << i + currentDirectory->numberOfDirectories+1 << " : " << currentDirectory->fileRecords[i]->name << ".txt" << endl;
+                cout << i + currentDirectory->numberOfDirectories + 1 << " : " << currentDirectory->fileRecords[i]->name << ".txt" << endl;
             }
             break;
         }
@@ -425,35 +429,36 @@ int main()
             }
             break;
         case 7: // copy file - hard - Mutasim
+        {
+            cout << "Enter the name of the file you want to read : ";
+            cin >> fileName;
+            cout << "Enter the name of the directory you want to copy to : ";
+            cin >> directoryName;
+
+            f1 = findFile(currentDirectory, fileName);
+            d1 = findDirectory(currentDirectory, directoryName);
+            char *fileContent = new char[f1->fileSize];
+            if (f1 == NULL)
             {
-                    cout << "Enter the name of the file you want to read : ";
-                cin >> fileName;
-                cout << "Enter the name of the directory you want to copy to : ";
-                cin >> directoryName;
-                
-                f1 = findFile(currentDirectory, fileName);
-                d1 = findDirectory(currentDirectory, directoryName);
-                char *fileContent = new char[f1->fileSize];
-                if (f1 == NULL)
-                {
-                    cout << "File does not exist in the current directory" << endl;
-                    break;
-                }
-                else if(d1 == NULL){
-                    cout << "Directory does not exist in the current directory" << endl;
-                    break;
-                }
-                else
-                {
-                    char* content;
-                    // read_file(f1);
-                    content = read_file(f1,fileContent);
-                    cout<<"content being duplicated: "<<content<<endl;
-                    createFile(*d1, content, *f1);
-                }
+                cout << "File does not exist in the current directory" << endl;
                 break;
-                }
+            }
+            else if (d1 == NULL)
+            {
+                cout << "Directory does not exist in the current directory" << endl;
+                break;
+            }
+            else
+            {
+                char *content;
+                // read_file(f1);
+                content = read_file(f1, fileContent);
+                cout << "content being duplicated: " << content << endl;
+                createFile(*d1, content, *f1);
+            }
             break;
+        }
+        break;
         case 8: // move file - doable
         {
             if (owner == 1)
